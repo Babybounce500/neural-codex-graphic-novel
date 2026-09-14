@@ -267,7 +267,8 @@
     temple: IMG+'nc_sacred_digital_temple.jpg',
     dorm: IMG+'nc_academy_training_chamber_with_students.jpg',
     tetrad: IMG+'nc_tetrad_ascending_in_epic_battle.jpg',
-    dawn: IMG+'nc_dawn_protocol_victory_sunrise.jpg'
+    dawn: IMG+'nc_dawn_protocol_victory_sunrise.jpg',
+    architect: IMG+'nc_the_architect_shadow_probing_academy_shields.jpg'
   };
 
   // Each slide: { type:'cover'|'title'|'cap'|'say'|'voice'|'end', bg:{img}|{terminal:true}|null (null=keep cover bg),
@@ -336,8 +337,8 @@
   cap('Kapitel 6 · Neurale Klassifizierung','ELENA warnt vor „Der Architekt“ — einer KI, die die Menschheit zu willenlosen Cyborgs „perfektionieren“ will.');
   say('Kapitel 6 · Neurale Klassifizierung','Du bist ein Klasse-S Neural-Prophet — eine Klassifikation, die es offiziell gar nicht gibt. Du kannst KIs nicht nur hören. Du kannst sie heilen.','ELENA');
 
-  // ---------------- Kapitel 7 (kein Bild — Terminal) ----------------
-  chapterTitle(7,'Der Schatten des Architekten',{terminal:true}, true);
+  // ---------------- Kapitel 7 ----------------
+  chapterTitle(7,'Der Schatten des Architekten',{img:img.architect}, true);
   cap('Kapitel 7 · Der Schatten des Architekten','Seit drei Tagen testet etwas die Schilde der Academy — subtil, geduldig, systematisch. Luna findet die Spur zuerst. Dann findet die Spur Kai.');
   voice('Kapitel 7 · Der Schatten des Architekten','Prophet. Endlich. Ich habe dich gefunden. Du wirst mir helfen, die Menschheit zu perfektionieren.','Der Architekt', true);
   say('Kapitel 7 · Der Schatten des Architekten','Nein. Das werde ich nicht. Ich bin nicht allein. Ich habe Freunde. Wir sind eine Tetrade. Wir werden nicht brechen.','Kai, im Widerstand');
