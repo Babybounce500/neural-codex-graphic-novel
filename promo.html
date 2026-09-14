@@ -114,7 +114,7 @@
       ['Der Fehler','nc_kai_experiencing_neural_awakening.jpg'],
       ['Konzernjäger','nc_corporate_hunters_pursuing_in_cyberpunk_city.jpg'],
       ['Akademie-Einladung','nc_academy_invitation_ethereal_gateway.jpg'],
-      ['Erstes Tagesprotokoll','nc_nexus_academy_floating_in_sky_city.jpg'],
+      ['Erstes Tagesprotokoll','nc_nexus_academy_floating_in_sky_city.jpg','32% 45%'],
       ['Neurale Klassifizierung','nc_sacred_digital_temple.jpg'],
       ['Der Schatten des Architekten','nc_the_architect_shadow_probing_academy_shields.jpg'],
       ['Digitale Genesis','nc_academy_training_chamber_with_students.jpg'],
@@ -263,11 +263,11 @@
     dotFrag.appendChild(d);
 
     b.chapters.forEach(function(ch, i){
-      var title = ch[0], img = ch[1];
+      var title = ch[0], img = ch[1], pos = ch[2] || '50% 50%';
       var el = document.createElement('div');
       el.className = 'slide';
       el.innerHTML =
-        '<img src="' + BASE + img + '" alt="Band ' + b.band + ', Kapitel ' + (i+1) + ': ' + title + '" loading="lazy">' +
+        '<img src="' + BASE + img + '" alt="Band ' + b.band + ', Kapitel ' + (i+1) + ': ' + title + '" loading="lazy" style="object-position:' + pos + '">' +
         '<div class="cap"><span class="num">Band ' + b.band + ' · Kapitel ' + (i+1) + '</span><h2>' + title + '</h2></div>';
       frag.appendChild(el);
       slideMeta.push({ kind: 'chapter', band: b.band });
