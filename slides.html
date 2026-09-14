@@ -72,12 +72,6 @@
     padding:.4rem .75rem; border-radius:3px; backdrop-filter:blur(3px);
   }
   .hud-chip b{ color:var(--gold); font-weight:600; }
-  .progress-track{
-    position:absolute; top:var(--letterbox); left:0; right:0; height:3px; z-index:21;
-    background:rgba(233,227,214,.1);
-  }
-  .progress-fill{ height:100%; width:0%; background:linear-gradient(90deg,var(--teal),var(--gold)); transition:width .3s ease; }
-
   /* ---------- click zones ---------- */
   .zone{ position:absolute; top:var(--letterbox); bottom:var(--letterbox); width:34%; z-index:15; cursor:pointer; }
   .zone.prev{ left:0; }
@@ -240,7 +234,6 @@
 <div id="stage" role="application" aria-roledescription="Comic-Slide-Reader" aria-label="Neural Codex Band 1, Comic-Slides">
   <div class="letterbox top"></div>
   <div class="letterbox bottom"></div>
-  <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
   <div class="hud-top">
     <span class="hud-chip" id="chapterChip">Titel</span>
     <span class="hud-chip"><b>Neural Codex</b> · Band I</span>
@@ -384,7 +377,6 @@
   var bubbleWrap = document.getElementById('bubbleWrap');
   var chapterChip = document.getElementById('chapterChip');
   var counter = document.getElementById('counter');
-  var progressFill = document.getElementById('progressFill');
   var liveRegion = document.getElementById('liveRegion');
   var btnPrev = document.getElementById('btnPrev'), btnNext = document.getElementById('btnNext');
 
@@ -465,7 +457,6 @@
 
     chapterChip.textContent = slide.chapter || (slide.type === 'cover' ? 'Titel' : slide.type === 'end' ? 'Ende' : 'Titel');
     counter.textContent = (idx+1) + ' / ' + S.length;
-    progressFill.style.width = (idx / (S.length - 1) * 100) + '%';
     btnPrev.disabled = idx === 0;
     btnNext.disabled = idx === S.length - 1;
     liveRegion.textContent = (slide.chapter || '') + ' — Folie ' + (idx+1) + ' von ' + S.length;
