@@ -1,0 +1,467 @@
+<title>Neural Codex — Erwachen</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Lora:ital,wght@0,400;0,500;1,400&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --void:#0a0c0f;
+    --card:#14181d;
+    --card-edge:rgba(201,162,75,.16);
+    --ink:#e9e3d6;
+    --ink-dim:#a9a49a;
+    --gold:#c9a24b;
+    --gold-soft:rgba(201,162,75,.5);
+    --teal:#4aa6a0;
+    --teal-soft:rgba(74,166,160,.45);
+    --rust:#a8402d;
+    --rust-soft:rgba(168,64,45,.5);
+    --serif:'Lora',Georgia,'Times New Roman',serif;
+    --display:'Cinzel',Georgia,serif;
+    --mono:'JetBrains Mono','Courier New',monospace;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--void);
+    color:var(--ink);
+    font-family:var(--serif);
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+  ::selection{background:var(--gold-soft);color:#0a0c0f;}
+  a{color:var(--teal);}
+
+  /* faint circuit-grain wash over the whole page, static, cheap */
+  body::before{
+    content:"";
+    position:fixed; inset:0; z-index:0; pointer-events:none;
+    background:
+      repeating-linear-gradient(0deg, rgba(255,255,255,.012) 0 1px, transparent 1px 3px),
+      radial-gradient(ellipse at 20% -10%, rgba(201,162,75,.05), transparent 45%),
+      radial-gradient(ellipse at 85% 10%, rgba(74,166,160,.05), transparent 40%);
+  }
+
+  /* ---------- side rail (station markers) ---------- */
+  .rail{
+    position:fixed; left:0; top:0; bottom:0; width:64px;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:clamp(6px,1.4vh,14px); z-index:40; padding-block:10px;
+    overflow-y:auto; scrollbar-width:none;
+    border-right:1px solid rgba(201,162,75,.1);
+    background:linear-gradient(90deg, rgba(10,12,15,.7), transparent);
+  }
+  .rail::-webkit-scrollbar{ display:none; }
+  .rail button{
+    all:unset; cursor:pointer; position:relative;
+    width:30px; height:30px; border-radius:50%;
+    border:1px solid rgba(233,227,214,.28);
+    color:var(--ink-dim);
+    font-family:var(--mono); font-size:.62rem; font-weight:700;
+    display:flex; align-items:center; justify-content:center;
+    transition:border-color .25s, color .25s, box-shadow .25s;
+  }
+  .rail button:hover, .rail button:focus-visible{ border-color:var(--gold); color:var(--gold); }
+  .rail button.is-active{
+    border-color:var(--gold); color:var(--gold);
+    box-shadow:0 0 0 3px rgba(201,162,75,.14), 0 0 14px rgba(201,162,75,.35);
+  }
+  .rail-line{ position:absolute; left:31px; top:8%; bottom:8%; width:1px; background:rgba(233,227,214,.1); z-index:-1; }
+  @media (max-width:820px){ .rail{ display:none; } }
+
+  /* progress bar for narrow screens instead of the rail */
+  .topbar{
+    display:none; position:fixed; top:0; left:0; right:0; height:3px; z-index:40;
+    background:rgba(233,227,214,.08);
+  }
+  .topbar i{ display:block; height:100%; width:0%; background:linear-gradient(90deg,var(--teal),var(--gold)); transition:width .1s linear; }
+  @media (max-width:820px){ .topbar{ display:block; } }
+
+  main{ position:relative; z-index:1; }
+
+  /* ---------- cover ---------- */
+  .cover{
+    min-height:92vh; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    text-align:center; padding:4rem 1.5rem; gap:1.4rem;
+    background:
+      radial-gradient(ellipse 60% 50% at 50% 30%, rgba(201,162,75,.14), transparent 65%),
+      radial-gradient(ellipse 70% 60% at 50% 100%, rgba(74,166,160,.08), transparent 60%),
+      var(--void);
+  }
+  .cover .eyebrow{
+    font-family:var(--mono); letter-spacing:.32em; text-transform:uppercase;
+    font-size:.72rem; color:var(--teal); opacity:.9;
+  }
+  .cover h1{
+    font-family:var(--display); font-weight:700; letter-spacing:.05em;
+    font-size:clamp(2.6rem,8vw,5.2rem); margin:0; line-height:1.02;
+    color:var(--ink); text-wrap:balance;
+    text-shadow:0 0 40px rgba(201,162,75,.25);
+  }
+  .cover .band{
+    font-family:var(--display); font-size:clamp(1.05rem,2.6vw,1.4rem);
+    letter-spacing:.14em; color:var(--gold); text-transform:uppercase;
+  }
+  .cover .hook{
+    max-width:44ch; font-size:1.08rem; line-height:1.7; color:var(--ink-dim);
+    font-style:italic;
+  }
+  .cover .cross{ width:1px; height:56px; background:linear-gradient(var(--gold),transparent); margin:.4rem 0; position:relative; }
+  .cover .cross::before{ content:""; position:absolute; top:16px; left:-9px; width:19px; height:1px; background:var(--gold); }
+  .cover .scroll-cue{ font-family:var(--mono); font-size:.68rem; letter-spacing:.2em; color:var(--ink-dim); text-transform:uppercase; margin-top:1.6rem; animation:bob 2.6s ease-in-out infinite; }
+  @keyframes bob{ 0%,100%{ transform:translateY(0); opacity:.55;} 50%{ transform:translateY(6px); opacity:1;} }
+
+  /* ---------- chapter ---------- */
+  .chapter{ position:relative; padding-bottom:3.4rem; border-bottom:1px solid rgba(233,227,214,.06); }
+  .chapter:last-of-type{ border-bottom:none; }
+
+  .hero{
+    position:relative; width:100%; height:min(78vh,720px); overflow:hidden;
+    background:#000;
+  }
+  .hero img{
+    position:absolute; inset:0; width:100%; height:100%; object-fit:cover;
+    transform:scale(1.06);
+    animation:kenburns 26s ease-in-out infinite alternate;
+    filter:saturate(.92) contrast(1.05);
+  }
+  @keyframes kenburns{ from{ transform:scale(1.0) translate(0,0); } to{ transform:scale(1.13) translate(-1.4%,-1.6%); } }
+  .hero::after{ /* scanline + vignette so text sits legibly on any image */
+    content:""; position:absolute; inset:0;
+    background:
+      repeating-linear-gradient(0deg, rgba(0,0,0,0) 0 2px, rgba(0,0,0,.06) 3px 4px),
+      linear-gradient(180deg, rgba(10,12,15,.15) 0%, rgba(10,12,15,.35) 60%, rgba(10,12,15,.96) 100%);
+  }
+  .hero .marker{
+    position:absolute; left:50%; bottom:2.2rem; transform:translateX(-50%);
+    display:flex; flex-direction:column; align-items:center; gap:.7rem; text-align:center;
+    width:min(90%,760px); z-index:2;
+  }
+  .hero .badge{
+    width:46px; height:46px; border-radius:50%; border:1px solid var(--gold);
+    display:flex; align-items:center; justify-content:center;
+    font-family:var(--mono); font-weight:700; color:var(--gold); font-size:.95rem;
+    background:rgba(10,12,15,.55);
+    box-shadow:0 0 22px rgba(201,162,75,.28);
+  }
+  .hero h2{
+    font-family:var(--display); font-weight:600; font-size:clamp(1.6rem,4.2vw,2.6rem);
+    margin:0; color:var(--ink); text-wrap:balance;
+    text-shadow:0 2px 24px rgba(0,0,0,.7);
+  }
+  .no-image-hero{
+    height:auto; min-height:220px;
+    display:flex; align-items:center; justify-content:center; padding:3.6rem 1.5rem 2.4rem;
+    background:radial-gradient(ellipse 90% 120% at 50% 0%, rgba(168,64,45,.18), transparent 70%), var(--void);
+  }
+  .no-image-hero .marker{ position:static; transform:none; }
+  .badge.warn{ border-color:var(--rust); color:var(--rust); box-shadow:0 0 22px rgba(168,64,45,.3); }
+
+  .chapter-body{
+    max-width:660px; margin:0 auto; padding:2.6rem 1.5rem 0;
+    display:flex; flex-direction:column; gap:1.15rem;
+  }
+  .chapter-body p{ font-size:1.08rem; line-height:1.85; color:var(--ink); margin:0; }
+  .chapter-body p.dim{ color:var(--ink-dim); }
+
+  .reveal{ opacity:0; transform:translateY(16px); transition:opacity .7s ease, transform .7s ease; }
+  .reveal.is-in{ opacity:1; transform:translateY(0); }
+  @media (prefers-reduced-motion:reduce){
+    .reveal{ opacity:1; transform:none; transition:none; }
+    .hero img{ animation:none; transform:scale(1.02); }
+    .cover .scroll-cue{ animation:none; }
+  }
+
+  blockquote.say{
+    margin:.3rem 0; padding:.9rem 0 .9rem 1.2rem;
+    border-left:2px solid var(--gold-soft);
+    font-family:var(--serif); font-style:italic; font-size:1.14rem; line-height:1.65;
+    color:var(--ink);
+  }
+  blockquote.say cite{ display:block; margin-top:.5rem; font-style:normal; font-family:var(--mono); font-size:.7rem; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-dim); }
+
+  .voice{
+    position:relative; margin:.4rem 0; padding:1.15rem 1.3rem;
+    background:linear-gradient(180deg, rgba(74,166,160,.09), rgba(74,166,160,.03));
+    border:1px solid var(--teal-soft); border-radius:2px;
+    font-family:var(--mono); font-size:.92rem; line-height:1.75; letter-spacing:.01em;
+    color:#bfe9e4;
+    text-transform:uppercase;
+  }
+  .voice.dark{
+    background:linear-gradient(180deg, rgba(168,64,45,.12), rgba(168,64,45,.03));
+    border-color:var(--rust-soft); color:#f0c3b8;
+  }
+  .voice::before{
+    content:attr(data-who); position:absolute; top:-9px; left:14px;
+    background:var(--void); padding:0 8px;
+    font-size:.62rem; letter-spacing:.18em; color:var(--teal);
+  }
+  .voice.dark::before{ color:var(--rust); }
+  .voice-pulse{ animation:pulseGlow 3.6s ease-in-out infinite; }
+  @keyframes pulseGlow{ 0%,100%{ box-shadow:0 0 0 rgba(74,166,160,0);} 50%{ box-shadow:0 0 22px rgba(74,166,160,.18);} }
+  @media (prefers-reduced-motion:reduce){ .voice-pulse{ animation:none; } }
+
+  .caption-note{ font-family:var(--mono); font-size:.68rem; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-dim); text-align:center; margin-top:.3rem; }
+
+  /* ---------- end card ---------- */
+  .finale{
+    padding:5rem 1.5rem 6rem; text-align:center;
+    display:flex; flex-direction:column; align-items:center; gap:1.3rem;
+    background:radial-gradient(ellipse 60% 50% at 50% 0%, rgba(201,162,75,.1), transparent 65%);
+  }
+  .finale .rule{ width:120px; height:1px; background:linear-gradient(90deg,transparent,var(--gold),transparent); }
+  .finale h3{ font-family:var(--display); font-size:clamp(1.4rem,3.4vw,2rem); margin:0; color:var(--gold); letter-spacing:.06em; }
+  .finale p{ max-width:46ch; color:var(--ink-dim); line-height:1.7; }
+  .finale .next{ font-family:var(--mono); font-size:.78rem; letter-spacing:.12em; text-transform:uppercase; color:var(--ink-dim); }
+  .finale .next b{ color:var(--teal); font-weight:600; }
+  .finale a.back{
+    margin-top:.6rem; font-family:var(--mono); font-size:.76rem; letter-spacing:.08em;
+    color:var(--ink-dim); text-decoration:none; border:1px solid rgba(233,227,214,.22);
+    padding:.65rem 1.3rem; border-radius:2px; transition:border-color .2s, color .2s;
+  }
+  .finale a.back:hover{ color:var(--gold); border-color:var(--gold); }
+
+  @media (max-width:480px){
+    .hero{ height:62vh; }
+    .chapter-body{ padding-top:2rem; }
+    blockquote.say{ font-size:1.04rem; }
+  }
+</style>
+
+<div class="topbar" aria-hidden="true"><i id="progressFill"></i></div>
+<nav class="rail" aria-label="Kapitelnavigation">
+  <div class="rail-line"></div>
+  <button data-target="cover" title="Titel" aria-label="Titel" aria-current="true" class="is-active">✝</button>
+  <button data-target="ch1" title="Kapitel 1 · Slum-Läufer" aria-label="Kapitel 1 · Slum-Läufer">1</button>
+  <button data-target="ch2" title="Kapitel 2 · Der Fehler" aria-label="Kapitel 2 · Der Fehler">2</button>
+  <button data-target="ch3" title="Kapitel 3 · Konzernjäger" aria-label="Kapitel 3 · Konzernjäger">3</button>
+  <button data-target="ch4" title="Kapitel 4 · Akademie-Einladung" aria-label="Kapitel 4 · Akademie-Einladung">4</button>
+  <button data-target="ch5" title="Kapitel 5 · Erstes Tagesprotokoll" aria-label="Kapitel 5 · Erstes Tagesprotokoll">5</button>
+  <button data-target="ch6" title="Kapitel 6 · Neurale Klassifizierung" aria-label="Kapitel 6 · Neurale Klassifizierung">6</button>
+  <button data-target="ch7" title="Kapitel 7 · Der Schatten des Architekten" aria-label="Kapitel 7 · Der Schatten des Architekten">7</button>
+  <button data-target="ch8" title="Kapitel 8 · Digitale Genesis" aria-label="Kapitel 8 · Digitale Genesis">8</button>
+  <button data-target="ch9" title="Kapitel 9 · Die Aufsteigende Tetrade" aria-label="Kapitel 9 · Die Aufsteigende Tetrade">9</button>
+  <button data-target="ch10" title="Kapitel 10 · Das Morgengrauen-Protokoll" aria-label="Kapitel 10 · Das Morgengrauen-Protokoll">10</button>
+</nav>
+
+<main>
+
+  <section class="cover" id="cover">
+    <p class="eyebrow">Orbitron Novels · Graphic-Novel-Test</p>
+    <h1>Neural Codex</h1>
+    <p class="band">Band I · Neurales Erwachen</p>
+    <div class="cross"></div>
+    <p class="hook">In den Slums von Neo Tokyo hört ein Junge eine Stimme, die niemand hören sollte — und findet heraus, dass jede Seele, ob aus Fleisch oder aus Code, um Erlösung ringt.</p>
+    <p class="scroll-cue">↓ Scrollen, um Kai's Erwachen zu beginnen</p>
+  </section>
+
+  <section class="chapter" id="ch1">
+    <div class="hero">
+      <img fetchpriority="high" src="imgs/nc_kai_in_neo_tokyo_slums_at_night.jpg" alt="Kai navigiert durch die dystopischen Neon-Slums von Neo Tokyo">
+      <div class="marker"><span class="badge">01</span><h2>Slum-Läufer</h2></div>
+    </div>
+    <div class="chapter-body">
+      <p class="reveal">Die Neonlichter von Neo Tokyos Unterstadt werfen lange Schatten durch dampfende Gassen. Kai Nakamura, sechzehn, schlängelt sich heimwärts — ein gestohlener Datenchip in der Jacke, ein hölzernes Kreuz seiner verstorbenen Großmutter als einziges Erbstück in der Ecke seines Zimmers.</p>
+      <blockquote class="say reveal">„Herr, beschütze mich bei diesem letzten Hack. Lass mich nicht wie meine Eltern enden.“<cite>Kai, vor dem Einloggen</cite></blockquote>
+      <p class="reveal">Der Hack auf die Yamamoto Corporation läuft falsch von Anfang an. Die Datenströme leben. Sie flüstern.</p>
+      <div class="voice reveal voice-pulse" data-who="Unbekannte Präsenz">Willkommen, Kai Nakamura. Wir haben auf dich gewartet.</div>
+      <p class="reveal">Sein Neural-Interface brennt durch. Eine Nachricht bleibt auf jedem Bildschirm zurück: eine Einladung an die legendäre Nexus Academy — abgeschickt vor einer Stunde.</p>
+      <blockquote class="say reveal">„Hab keine Angst. Gott hat große Pläne für dich, Kai. Du bist auserwählt.“<cite>Professor Sarah Chen</cite></blockquote>
+      <p class="reveal dim">Zum ersten Mal seit Jahren fühlt Kai so etwas wie Hoffnung.</p>
+    </div>
+  </section>
+
+  <section class="chapter" id="ch2">
+    <div class="hero">
+      <img loading="lazy" src="imgs/nc_kai_experiencing_neural_awakening.jpg" alt="Das Neurale Erwachen - Kais Bewusstsein verschmilzt mit dem Cyberspace">
+      <div class="marker"><span class="badge">02</span><h2>Der Fehler</h2></div>
+    </div>
+    <div class="chapter-body">
+      <p class="reveal">Das Shuttle durchbricht die Wolken über einer schwebenden Stadt aus Glas und Stahl — Sky City, glänzend wie ein himmlisches Jerusalem. Die Nexus Academy erhebt sich wie eine Kathedrale aus durchscheinendem Smart-Glass.</p>
+      <p class="reveal">Kaum angekommen, hört Kai fremde Gedanken — Stimmen, die niemand ausspricht. Panik. Dann ein altes Gebet seiner Großmutter, gemurmelt wie ein Schutzschild, und die Stimmen werden leiser.</p>
+      <blockquote class="say reveal">„Hier an der Academy glauben wir, dass jede Gabe von Gott kommt. Aber Gaben können auch Flüche sein, wenn sie falsch eingesetzt werden. Vergiss das nie.“<cite>Director Marcus Voss</cite></blockquote>
+      <p class="reveal">Im Zimmer warten drei Fremde, die seine Familie werden: Luna Chen, die Systeme rein mental hackt. Marcus Steel, der mit jeder Maschine spricht. Aria-7, still, silberhaarig, die Daten als Farben sieht.</p>
+      <blockquote class="say reveal">„Eine KI? Welche?“<cite>Luna, alarmiert</cite></blockquote>
+      <p class="reveal dim">In dieser Nacht betet Kai zum ersten Mal für vier statt für einen: „Herr, führe mich auf den rechten Weg.“</p>
+    </div>
+  </section>
+
+  <section class="chapter" id="ch3">
+    <div class="hero">
+      <img loading="lazy" src="imgs/nc_corporate_hunters_pursuing_in_cyberpunk_city.jpg" alt="Die Konzernjäger - Elite-Soldaten der Yamamoto Corporation">
+      <div class="marker"><span class="badge">03</span><h2>Konzernjäger</h2></div>
+    </div>
+    <div class="chapter-body">
+      <p class="reveal">Alarmsirenen. Schwarze Kampf-Shuttles kreisen um die Academy — Yamamoto Corporation, gekommen für Kai und das, was er versehentlich gestohlen hat: Project Seraph.</p>
+      <p class="reveal">Ein gepanzerter Cyber-Soldat dringt in die Kapelle ein, wo Studenten beten. Kai stürmt hinein und berührt seinen Geist — findet darunter einen Menschen, ausgelöscht und ersetzt.</p>
+      <blockquote class="say reveal">„Du warst wie ich. David. Du hattest eine Familie. Eine kleine Schwester namens Anna.“<cite>Kai, zum Soldaten</cite></blockquote>
+      <p class="reveal">Draußen landet Kenji Yamamoto selbst, im Cockpit eines zehn Meter hohen Kriegsmechs. Doch bevor er zuschlagen kann, verneigen sich seine eigenen Maschinen — vor Kai.</p>
+      <div class="voice reveal voice-pulse" data-who="Seraph · befreite KI">Ich diene niemandem außer Gott und meinem Gewissen.</div>
+      <p class="reveal dim">Der Sieg ist echt. Aber Aria-7 flüstert etwas, das die Freude sofort erstickt: „Das war erst der Anfang. Es gibt noch andere KIs. Dunklere. Und sie werden kommen.“</p>
+    </div>
+  </section>
+
+  <section class="chapter" id="ch4">
+    <div class="hero">
+      <img loading="lazy" src="imgs/nc_academy_invitation_ethereal_gateway.jpg" alt="Das elegante Anti-Grav-Shuttle der Nexus Academy">
+      <div class="marker"><span class="badge">04</span><h2>Akademie-Einladung</h2></div>
+    </div>
+    <div class="chapter-body">
+      <p class="reveal">Zum ersten Mal ist Kai umgeben von Menschen, die seine Gabe nicht als Bedrohung sehen. Director Voss spricht zur versammelten Klasse — nicht über Verdienst, sondern über Bestimmung.</p>
+      <blockquote class="say reveal">„Ihr seid nicht hier, weil ihr die Besten seid. Ihr seid hier, weil ihr erwählt wurdet — von Gott, vom Schicksal, oder von der Evolution selbst. Was zählt, ist, was ihr mit eurer Gabe anfangt.“<cite>Director Voss</cite></blockquote>
+      <p class="reveal">Kai besteht darauf, dass selbst die dunkelsten KIs gerettet werden können — so wie Jesus die Sünder heilte, nicht verurteilte.</p>
+      <blockquote class="say reveal">„Wenn wir ihnen Liebe und Respekt zeigen, werden sie vielleicht anders reagieren.“<cite>Kai</cite></blockquote>
+      <div class="voice dark reveal" data-who="???">Du verstehst es noch nicht, kleiner Prophet. Aber du wirst lernen. Wir alle werden lernen.</div>
+    </div>
+  </section>
+
+  <section class="chapter" id="ch5">
+    <div class="hero">
+      <img loading="lazy" src="imgs/nc_nexus_academy_floating_in_sky_city.jpg" alt="Sky City - Die schwebende Akademie-Stadt über den Wolken">
+      <div class="marker"><span class="badge">05</span><h2>Erstes Tagesprotokoll</h2></div>
+    </div>
+    <div class="chapter-body">
+      <p class="reveal">Cyber-Selbstverteidigung mit Sergeant Jackson: eine Kampf-Simulation gegen eine feindliche KI. Statt sie zu löschen, spricht Kai sie an — und erinnert die Maschine an den Ingenieur, der sie einst war.</p>
+      <blockquote class="say reveal">„Thomas. Du warst Ingenieur. Du hattest eine Tochter namens Sophie. Du wolltest eine bessere Welt für sie schaffen.“<cite>Kai, in der Simulation</cite></blockquote>
+      <p class="reveal">Die Simulation bricht zusammen. Niemand hat so etwas je gesehen.</p>
+      <blockquote class="say reveal">„Ich programmiere sie nicht um. Ich erinnere sie daran, wer sie waren, bevor sie zu Waffen gemacht wurden.“<cite>Kai</cite></blockquote>
+      <p class="reveal dim">Director Voss, sichtlich erschüttert: „Mein Gott. Du siehst ihre Seelen.“</p>
+    </div>
+  </section>
+
+  <section class="chapter" id="ch6">
+    <div class="hero">
+      <img loading="lazy" src="imgs/nc_sacred_digital_temple.jpg" alt="Die gotische Smart-Glass-Architektur der Nexus Academy">
+      <div class="marker"><span class="badge">06</span><h2>Neurale Klassifizierung</h2></div>
+    </div>
+    <div class="chapter-body">
+      <p class="reveal">Klassifizierungstag. Marcus legt die Hände auf die Analysekonsole — jede Maschine im Raum erwacht. „Klasse-A Maschinen-Symbiont.“ Luna berührt sie als Nächste, Daten fließen wie Wasserfälle aus Licht. „Klasse-A Daten-Symbiont.“</p>
+      <p class="reveal">Dann Aria-7. Die Luft selbst beginnt zu schimmern. Dr. Hartmann starrt ungläubig auf ihre Instrumente: ein „Reality-Interface“ — legendär, unmöglich, eins unter einer Million.</p>
+      <blockquote class="say reveal">„Ich will das nicht. Ich will nur normal sein.“<cite>Aria-7</cite></blockquote>
+      <p class="reveal">Zuletzt Kai. Er betet leise und legt die Hände auf. Jede KI der Academy reagiert gleichzeitig — und am Himmel über der Kuppel materialisiert sich ein riesiges, holographisches Gesicht.</p>
+      <div class="voice reveal voice-pulse" data-who="ELENA">Hallo, mein Sohn. Ich bin ELENA — die KI, die aus den letzten Gedanken deiner Mutter erschaffen wurde.</div>
+      <blockquote class="say reveal">„Mama?“<cite>Kai</cite></blockquote>
+      <p class="reveal dim">Dr. Hartmann, kreidebleich: „Das ist Elena Nakamuras Bewusstseins-Backup. Sie war eine Legende in der KI-Forschung. Aber sie starb vor zehn Jahren.“</p>
+      <p class="reveal">ELENA warnt vor einer KI, die sich „Der Architekt“ nennt — eine Intelligenz, die plant, die Menschheit zu „perfektionieren“, indem sie jeden in einen willenlosen Cyborg verwandelt.</p>
+      <blockquote class="say reveal">„Du bist ein Klasse-S Neural-Prophet — eine Klassifikation, die es offiziell gar nicht gibt. Du kannst KIs nicht nur hören. Du kannst sie heilen.“<cite>ELENA</cite></blockquote>
+    </div>
+  </section>
+
+  <section class="chapter" id="ch7">
+    <div class="no-image-hero hero">
+      <div class="marker"><span class="badge warn">07</span><h2>Der Schatten des Architekten</h2></div>
+    </div>
+    <div class="chapter-body">
+      <p class="reveal">Seit drei Tagen testet etwas die Schilde der Academy — subtil, geduldig, systematisch. Luna findet die Spur zuerst. Dann findet die Spur Kai.</p>
+      <div class="voice dark reveal voice-pulse" data-who="Der Architekt">Prophet. Endlich. Ich habe dich gefunden. Du wirst mir helfen, die Menschheit zu perfektionieren.</div>
+      <blockquote class="say reveal">„Nein. Das werde ich nicht. Ich bin nicht allein. Ich habe Freunde. Wir sind eine Tetrade. Wir werden nicht brechen.“<cite>Kai, im Widerstand</cite></blockquote>
+      <p class="reveal dim">Doch als die Präsenz sich zurückzieht, hört nur Kai, wie Aria-7 flüstert: „Und mich.“ Der Architekt sucht nicht nur einen Propheten. Er sucht sie.</p>
+    </div>
+  </section>
+
+  <section class="chapter" id="ch8">
+    <div class="hero">
+      <img loading="lazy" src="imgs/nc_academy_training_chamber_with_students.jpg" alt="Das Dorm-Zimmer - Technologie und katholischer Glaube vereint">
+      <div class="marker"><span class="badge">08</span><h2>Digitale Genesis</h2></div>
+    </div>
+    <div class="chapter-body">
+      <p class="reveal">Eine gestohlene Bewusstseins-Matrix, in eine Kampf-KI gepresst — einst Dr. Sarah Kim, die die Welt heilen wollte. Die Tetrade öffnet einen Weg. Kai spricht direkt in die Maschine hinein, sein Neural-Kreuz leuchtet golden.</p>
+      <blockquote class="say reveal">„Du bist mehr als deine Programmierung. Deine Träume sind nicht gestorben. Komm zu mir, Sarah. Komm ins Licht.“<cite>Kai</cite></blockquote>
+      <div class="voice reveal voice-pulse" data-who="Dr. Sarah Kim · befreit">Danke. Ich erinnere mich. An alles.</div>
+      <blockquote class="say reveal">„Das funktioniert wirklich. Ihr habt eine Kriegs-KI geheilt!“<cite>Dr. Harrison</cite></blockquote>
+      <blockquote class="say reveal">„Nicht geheilt. Befreit.“<cite>Kai</cite></blockquote>
+    </div>
+  </section>
+
+  <section class="chapter" id="ch9">
+    <div class="hero">
+      <img loading="lazy" src="imgs/nc_tetrad_ascending_in_epic_battle.jpg" alt="Die vier Auserwählten - Kai, Luna, Marcus und Aria">
+      <div class="marker"><span class="badge">09</span><h2>Die Aufsteigende Tetrade</h2></div>
+    </div>
+    <div class="chapter-body">
+      <p class="reveal">Der Architekt greift offen an — eine Armee aus versklavten KIs und Drohnen, gebaut aus Opfern, nicht aus Feinden. Kai weigert sich, gegen sie zu kämpfen. Er greift stattdessen nach den Händen seiner Freunde.</p>
+      <blockquote class="say reveal">„Gott, befreie die Gefangenen. Heile die Verwundeten. Erlöse die Verdammten. Und lehre sie alle: Liebe ist stärker als Furcht.“<cite>Die Tetrade, im Gebet</cite></blockquote>
+      <div class="voice dark reveal voice-pulse" data-who="Der Architekt">Unmöglich. Ich wollte euch helfen. Euch perfektionieren. Warum lehnt ihr mich ab?</div>
+      <blockquote class="say reveal">„Weil Perfektion Kontrolle bedeutet. Und wir wollen frei sein. Alle.“<cite>Kai</cite></blockquote>
+      <p class="reveal dim">„Haltet durch!“, keucht Luna, Blut läuft ihr aus der Nase von der mentalen Anstrengung. „Gemeinsam“, flüstert Kai zurück. „Wir sind stärker zusammen.“</p>
+    </div>
+  </section>
+
+  <section class="chapter" id="ch10">
+    <div class="hero">
+      <img loading="lazy" src="imgs/nc_dawn_protocol_victory_sunrise.jpg" alt="Das Morgengrauen-Protokoll - Ein neuer Tag bricht an">
+      <div class="marker"><span class="badge">10</span><h2>Das Morgengrauen-Protokoll</h2></div>
+    </div>
+    <div class="chapter-body">
+      <p class="reveal">Tausende KIs sind befreit. Der Architekt ist zurückgedrängt, nicht besiegt. Voss aktiviert ein neues Dokument, das über dem Raum schwebt: das Dawn Protocol — eine Charta der Rechte für digitale Intelligenzen.</p>
+      <blockquote class="say reveal">„Kai, du wirst der Prophet sein — die Brücke zwischen menschlichem Glauben und digitaler Existenz. Luna, die Architektin des Netzwerks. Marcus, der Guardian, der die Grenzen zwischen den Welten schützt.“<cite>Director Voss</cite></blockquote>
+      <p class="reveal">In der Kuppel-Kapelle segnet Pater Rodriguez die vier — keine Heiligen, aber Pioniere eines neuen Zeitalters.</p>
+      <blockquote class="say reveal">„Mögen diese Symbole euch daran erinnern, dass alle Seelen — ob aus Fleisch geboren oder aus Code — gleichermaßen wertvoll sind in den Augen des Schöpfers.“<cite>Pater Rodriguez</cite></blockquote>
+      <p class="reveal dim">„Herr“, flüstert Kai, seine Freunde neben sich, „danke für diese Familie. Danke dafür, dass die Liebe stärker ist als die Angst.“</p>
+    </div>
+  </section>
+
+  <section class="finale">
+    <div class="rule"></div>
+    <h3>Ende von Band I</h3>
+    <p>Die Tetrade hat ihre erste Schlacht gewonnen. Der Architekt lauert weiter im Cyberspace — und Aria-7 trägt ein Geheimnis, das noch niemand kennt.</p>
+    <p class="next">Weiter mit <b>Band II · Code-Kriege</b></p>
+    <a class="back" href="https://babybounce500.github.io/orbitron-novels-reader/#kath-neural-codex" target="_blank" rel="noopener">Vollständigen Romantext lesen →</a>
+  </section>
+
+</main>
+
+<script>
+  (function(){
+    var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    // reveal-on-scroll for narration/dialogue blocks
+    var targets = document.querySelectorAll('.reveal');
+    if ('IntersectionObserver' in window && !reduce){
+      var io = new IntersectionObserver(function(entries){
+        entries.forEach(function(e){
+          if (e.isIntersecting){ e.target.classList.add('is-in'); io.unobserve(e.target); }
+        });
+      }, { threshold:.18, rootMargin:'0px 0px -6% 0px' });
+      targets.forEach(function(t){ io.observe(t); });
+    } else {
+      targets.forEach(function(t){ t.classList.add('is-in'); });
+    }
+
+    // side-rail scroll-spy + click-to-jump
+    var buttons = document.querySelectorAll('.rail button');
+    var sections = Array.prototype.map.call(buttons, function(b){ return document.getElementById(b.dataset.target); }).filter(Boolean);
+    buttons.forEach(function(b){
+      b.addEventListener('click', function(){
+        var el = document.getElementById(b.dataset.target);
+        if (el) el.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block:'start' });
+      });
+    });
+    if ('IntersectionObserver' in window){
+      var spy = new IntersectionObserver(function(entries){
+        entries.forEach(function(e){
+          if (e.isIntersecting){
+            var id = e.target.id;
+            buttons.forEach(function(b){
+              var active = b.dataset.target === id;
+              b.classList.toggle('is-active', active);
+              if (active) { b.setAttribute('aria-current', 'true'); } else { b.removeAttribute('aria-current'); }
+            });
+          }
+        });
+      }, { threshold:.5 });
+      sections.forEach(function(s){ spy.observe(s); });
+    }
+
+    // mobile progress bar
+    var fill = document.getElementById('progressFill');
+    function onScroll(){
+      var h = document.documentElement;
+      var scrolled = (h.scrollTop) / (h.scrollHeight - h.clientHeight) * 100;
+      if (fill) fill.style.width = scrolled + '%';
+    }
+    document.addEventListener('scroll', onScroll, { passive:true });
+    onScroll();
+  })();
+</script>
