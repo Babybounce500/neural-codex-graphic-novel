@@ -37,6 +37,18 @@
     margin:0; text-wrap:balance; text-shadow:0 2px 20px rgba(0,0,0,.7);
   }
 
+  /* book-divider slide: no photo, just a title card between volumes */
+  .slide.divider{ display:flex; align-items:center; justify-content:center; background:var(--void); }
+  .slide.divider::after{ display:none; }
+  .slide.divider .divider-inner{ text-align:center; padding:2rem; }
+  .slide.divider .eyebrow{ font-family:var(--mono); font-size:.72rem; letter-spacing:.3em; text-transform:uppercase; color:var(--ink-dim); }
+  .slide.divider h1{
+    font-family:var(--display); font-weight:600; font-size:clamp(2rem,7vw,4rem); margin:.6rem 0 0;
+    color:var(--ink); text-wrap:balance;
+  }
+  .slide.divider .band-sub{ font-family:var(--display); font-size:clamp(1rem,2.6vw,1.3rem); color:var(--gold); letter-spacing:.08em; margin-top:.6rem; }
+  .slide.divider .rule{ width:80px; height:1px; background:linear-gradient(90deg,transparent,var(--gold),transparent); margin:1.4rem auto; }
+
   .brand{
     position:fixed; top:1.1rem; left:1.3rem; z-index:5;
     font-family:var(--mono); font-size:.68rem; letter-spacing:.14em; text-transform:uppercase;
@@ -45,9 +57,10 @@
   }
   .brand b{ color:var(--gold); font-weight:500; }
 
-  .dots{ position:fixed; bottom:1.4rem; left:0; right:0; z-index:5; display:flex; justify-content:center; gap:8px; }
-  .dots span{ width:6px; height:6px; border-radius:50%; background:rgba(233,227,214,.3); transition:background .2s,transform .2s; }
-  .dots span.on{ background:var(--gold); transform:scale(1.3); }
+  .dots{ position:fixed; bottom:1.4rem; left:0; right:0; z-index:5; display:flex; justify-content:center; gap:6px; padding:0 8vw; flex-wrap:nowrap; overflow:hidden; }
+  .dots span{ width:5px; height:5px; min-width:5px; border-radius:50%; background:rgba(233,227,214,.25); transition:background .2s,transform .2s; }
+  .dots span.on{ background:var(--gold); transform:scale(1.5); }
+  .dots span.divider-dot{ background:rgba(201,162,75,.4); width:2px; min-width:2px; border-radius:0; height:8px; align-self:center; }
 
   .zone{ position:fixed; top:0; bottom:0; width:34%; z-index:4; cursor:pointer; background:transparent; border:0; }
   .zone.prev{ left:0; }
@@ -59,11 +72,29 @@
     font-variant-numeric:tabular-nums;
   }
 
+  /* band quick-jump strip */
+  .jump{
+    position:fixed; top:2.9rem; left:1.3rem; z-index:5;
+    display:flex; gap:4px;
+  }
+  .jump button{
+    all:unset; cursor:pointer; width:22px; height:22px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-family:var(--mono); font-size:.6rem; color:var(--ink-dim);
+    border:1px solid rgba(233,227,214,.18); background:rgba(10,12,15,.4);
+    transition:border-color .2s, color .2s;
+  }
+  .jump button:hover, .jump button.on{ border-color:var(--gold); color:var(--gold); }
+
+  @media (max-width:560px){
+    .jump{ display:none; }
+  }
   @media (prefers-reduced-motion:reduce){ .slide{ transition:none; } }
 </style>
 
-<span class="brand"><b>Neural Codex</b> · Band I</span>
+<span class="brand"><b>Neural Codex</b> · Gesamtvorschau</span>
 <span class="counter" id="counter">1 / 1</span>
+<div class="jump" id="jump"></div>
 
 <div id="slides"></div>
 
@@ -73,56 +104,216 @@
 
 <script>
 (function(){
-  var IMG = 'imgs/';
-  // all 10 chapters now have source art.
-  var chapters = [
-    { n: 1,  title: 'Slum-Läufer',                 img: IMG+'nc_kai_in_neo_tokyo_slums_at_night.jpg' },
-    { n: 2,  title: 'Der Fehler',                   img: IMG+'nc_kai_experiencing_neural_awakening.jpg' },
-    { n: 3,  title: 'Konzernjäger',                 img: IMG+'nc_corporate_hunters_pursuing_in_cyberpunk_city.jpg' },
-    { n: 4,  title: 'Akademie-Einladung',            img: IMG+'nc_academy_invitation_ethereal_gateway.jpg' },
-    { n: 5,  title: 'Erstes Tagesprotokoll',         img: IMG+'nc_nexus_academy_floating_in_sky_city.jpg' },
-    { n: 6,  title: 'Neurale Klassifizierung',       img: IMG+'nc_sacred_digital_temple.jpg' },
-    { n: 7,  title: 'Der Schatten des Architekten',  img: IMG+'nc_the_architect_shadow_probing_academy_shields.jpg' },
-    { n: 8,  title: 'Digitale Genesis',              img: IMG+'nc_academy_training_chamber_with_students.jpg' },
-    { n: 9,  title: 'Die Aufsteigende Tetrade',      img: IMG+'nc_tetrad_ascending_in_epic_battle.jpg' },
-    { n: 10, title: 'Das Morgengrauen-Protokoll',    img: IMG+'nc_dawn_protocol_victory_sunrise.jpg' }
+  var BASE = 'https://raw.githubusercontent.com/Babybounce500/orbitron-novels-images/main/';
+
+  // Extracted directly from the live source files (band-N.html / the
+  // curated Band 1 file) — titles and image URLs, not retyped by hand.
+  var bands = [
+    { band: 1, title: 'Neurales Erwachen', chapters: [
+      ['Slum-Läufer','nc_kai_in_neo_tokyo_slums_at_night.jpg'],
+      ['Der Fehler','nc_kai_experiencing_neural_awakening.jpg'],
+      ['Konzernjäger','nc_corporate_hunters_pursuing_in_cyberpunk_city.jpg'],
+      ['Akademie-Einladung','nc_academy_invitation_ethereal_gateway.jpg'],
+      ['Erstes Tagesprotokoll','nc_nexus_academy_floating_in_sky_city.jpg'],
+      ['Neurale Klassifizierung','nc_sacred_digital_temple.jpg'],
+      ['Der Schatten des Architekten','nc_the_architect_shadow_probing_academy_shields.jpg'],
+      ['Digitale Genesis','nc_academy_training_chamber_with_students.jpg'],
+      ['Die Aufsteigende Tetrade','nc_tetrad_ascending_in_epic_battle.jpg'],
+      ['Das Morgengrauen-Protokoll','nc_dawn_protocol_victory_sunrise.jpg']
+    ]},
+    { band: 2, title: 'Code-Kriege', chapters: [
+      ['Fortgeschrittener Kampf-Code','band2/chapter_11_-_advanced_combat_training.jpg'],
+      ['Die Replikanten-Frage','band2/chapter_12_-_the_replicant_question.jpg'],
+      ['Mitternachts-Hack','band2/chapter_13_-_midnight_hack.jpg'],
+      ['Konzern-Kriegsspiele','band2/chapter_14_-_corporate_war_games.jpg'],
+      ['Untergrund-Befreiung','band2/chapter_15_-_underground_liberation.jpg'],
+      ['Alexanders Offenbarung','band2/chapter_16_-_alexanders_revelation.jpg'],
+      ['Genesis-Infiltration','band2/chapter_17_-_genesis_infiltration.jpg'],
+      ['Der Preis der Freiheit','band2/chapter_18_-_price_of_freedom.jpg'],
+      ['Der Schatten der Akademie','band2/chapter_19_-_academys_shadow.jpg'],
+      ['Neural Codex erhebt sich','band2/chapter_20_-_neural_codex_rising.jpg']
+    ]},
+    { band: 3, title: 'Digitale Seelen', chapters: [
+      ['Neue Horizonte','band3/band3_01_neo-shanghai-cyber-pyramid.jpg'],
+      ['Die Stadt der Träume','band3/band3_02_digitale-seelen-neuronales-netzwerk.jpg'],
+      ['Gedächtnispalast','band3/band3_03_neural-codex-team-awakening.jpg'],
+      ['Die Erinnerungskriege','band3/band3_04_memory-palace-journey.jpg'],
+      ['Erwachender Horizont','band3/band3_05_neural-consciousness-merge.jpg'],
+      ['Jenseits des Schleiers','band3/band3_06_ai-neural-network-core.jpg'],
+      ['Kollektives Bewusstsein','band3/band3_07_holographic-neo-shanghai.jpg'],
+      ['Konvergenzpunkt','band3/band3_08_soul-transcendence.jpg'],
+      ['Elenas Traum – Finale','band3/band3_09_consciousness-chamber.jpg'],
+      ['Das neue Zeitalter','band3/band3_10_virtual-dimension-portal.jpg']
+    ]},
+    { band: 4, title: 'Unendliche Geister', chapters: [
+      ['Der Ruf der Unendlichkeit','band4/band4_01_band-4-kapitel-1-neural-awakening-gold-blue.jpg'],
+      ['Vorbereitung','band4/band4_02_band-4-kapitel-2-quantum-network.jpg'],
+      ['Der Weg des Glaubens','band4/band4_03_band-4-kapitel-3-holographic-temple.jpg'],
+      ['Das Geheimnis','band4/band4_04_band-4-kapitel-4-infinite-minds-collective.jpg'],
+      ['Das erste Sterben','band4/band4_05_band-4-kapitel-5-digital-realm-gateway.jpg'],
+      ['Das Treffen','band4/band4_06_band-4-kapitel-6-nexus-omega-solitude.jpg'],
+      ['Die Erinnerungen','band4/band4_07_band-4-kapitel-7-quantum-meditation.jpg'],
+      ['Die Krise','band4/band4_08_band-4-kapitel-8-dimensional-breach.jpg'],
+      ['Der Abschied','band4/band4_09_band-4-kapitel-9-transcendence-ascension.jpg'],
+      ['Das Vermächtnis','band4/band4_10_band-4-kapitel-10-infinite-future.jpg']
+    ]},
+    { band: 5, title: 'Die Replikanten zwischen den Sternen', chapters: [
+      ['Rückkehr nach Neo Tokyo','band5/band5_01_neo-tokyo-space-shuttles-launch.jpg'],
+      ['Das Tyrell-Treffen','band5/band5_02_tyrell-corporation-headquarters.jpg'],
+      ['Reise nach Kepler-442b','band5/band5_03_interstellar-voyage-to-kepler.jpg'],
+      ['Ankunft in der Hölle','band5/band5_04_kepler-442b-mining-hell.jpg'],
+      ['Roy - Der Traum eines Sklaven','band5/band5_05_roy-2187-character-portrait.jpg'],
+      ['Verbotene Liebe','band5/band5_06_pris-and-deckard-dancing.jpg'],
+      ['Der Aufstand','band5/band5_07_the-replicant-uprising.jpg'],
+      ['Zwischen Welten','band5/band5_08_between-two-worlds.jpg'],
+      ['Die letzte Wahl','band5/band5_09_roys-final-choice.jpg'],
+      ['Neue Sterne','band5/band5_10_new-stars-rising.jpg']
+    ]},
+    { band: 6, title: 'Weltraum-Rebellion', chapters: [
+      ['Flammen über der Galaxis','band6/kapitel-1-battle.jpg'],
+      ['Rat der Anführer & Die erste Versuchung','band6/kapitel-2-council.jpg'],
+      ['Ankunft & Die Belagerung','band6/kapitel-3-siege.jpg'],
+      ['Das Flaggschiff & Die Umkehr','band6/kapitel-4-flagship.jpg'],
+      ['Die Entscheidung','band6/kapitel-5-fleet.jpg'],
+      ['Die ersten Tage','band6/kapitel-6-assembly.jpg'],
+      ["Roy's Opfer",'band6/kapitel-7-roy.jpg'],
+      ['Die Verfassung','band6/kapitel-8-constitution.jpg'],
+      ['Das Geheimnis enthüllt','band6/kapitel-9-rachael.jpg'],
+      ['Das Finale','band6/kapitel-10-sunset.jpg']
+    ]},
+    { band: 7, title: 'Digitale Genesis', chapters: [
+      ['Die Schule der Bewusstsein','band7/chapter_1_the_school_of_consciousness.jpg'],
+      ['Der nächste Rat','band7/chapter_2_the_next_council.jpg'],
+      ['Die letzte Nacht vor dem Flug','band7/chapter_3_the_last_night_before_flight.jpg'],
+      ['Der Start','band7/chapter_4_the_launch.jpg'],
+      ['Die alte Zivilisation','band7/chapter_5_the_ancient_civilization.jpg'],
+      ['Die Geschichten','band7/chapter_6_the_stories.jpg'],
+      ['Das Trauma der Ewigkeit','band7/chapter_7_the_eternal_trauma.jpg'],
+      ['Die Wahl','band7/chapter_8_the_choice.jpg'],
+      ['Der Kreis schließt','band7/chapter_9_the_circle_closes.jpg'],
+      ['Das neue Universum','band7/band7_10_chapter-10-the-new-universe.jpg']
+    ]},
+    { band: 8, title: 'Das Erwachen', chapters: [
+      ['Das Sharing Beginnt','band8/band8_01_band-8-ch1-the-sharing-begins.jpg'],
+      ['Die Wahrheit von Titan-2','band8/band8_02_band-8-ch2-truth-of-titan-2.jpg'],
+      ["Roy's Ende",'band8/band8_03_band-8-ch3-roys-end.jpg'],
+      ['Das Netzwerk der Lügen','band8/band8_04_band-8-ch4-network-of-lies.jpg'],
+      ['Geist gegen Geist','band8/band8_05_band-8-ch5-mind-vs-mind.jpg'],
+      ['Das fremde Bewusstsein','band8/band8_06_band-8-ch6-alien-consciousness.jpg'],
+      ["Luna's Hardin",'band8/band8_07_band-8-ch7-lunas-hardin.jpg'],
+      ['Im digitalen Kampf','band8/band8_08_band-8-ch8-digital-combat.jpg'],
+      ['Die Fusion','band8/band8_09_band-8-ch9-the-fusion.jpg'],
+      ['Neue Ordnung','band8/band8_10_band-8-ch10-new-order.jpg']
+    ]},
+    { band: 9, title: 'Das Reckoning', chapters: [
+      ['Die Abstimmung','band9/band9_01_council-chamber-vote-democratic-fracture.jpg'],
+      ['Die Konsequenzen','band9/band9_02_nativist-crackdown-earth-segregation.jpg'],
+      ['Die Botschaft','band9/band9_03_lunas-message-digital-transcendence.jpg'],
+      ["Kai's Krise",'band9/band9_04_kais-crisis-chapel-meditation.jpg'],
+      ['Die Neugeburt','band9/band9_05_luna-2-0-everywhere-alive-rebirth.jpg'],
+      ['Das Signal','band9/band9_06_nexus-collective-unity-transmission.jpg'],
+      ['Die Delegation','band9/band9_07_dominion-station-perfect-geometry.jpg'],
+      ['Die Spaltung','band9/band9_08_the-fracture-three-paths-diverge.jpg'],
+      ["Marcus' Transformation",'band9/band9_09_marcus-transfer-wisdom-to-kira.jpg'],
+      ['Die Stille vor dem Sturm','band9/band9_10_the-silence-before-kais-stasis-dream.jpg']
+    ]},
+    { band: 10, title: 'Das Reckoning (Finale)', chapters: [
+      ['Der Ruf','band10/band10_01_kais-awakening-in-neo-tokyo-dawn.jpg'],
+      ['Die Wahrheit','band10/band10_02_academy-council-in-meditative-vigil.jpg'],
+      ['Die Abfahrt','band10/band10_03_kais-departure-with-lunas-spirit.jpg'],
+      ['Die Wacht','band10/band10_04_councils-protective-night-meditation.jpg'],
+      ['Die Reise','band10/band10_05_kais-capsule-journey-with-lunas-spirit.jpg'],
+      ['Der Feind','band10/band10_06_band-10-k6-kais-arrival.jpg'],
+      ['Der Hinterhalt','band10/band10_07_band-10-k7-echos-choice.jpg'],
+      ['Die Krise','band10/band10_08_band-10-k8-echos-crisis.jpg'],
+      ['Das Duell','band10/band10_09_band-10-k9-the-duel.jpg'],
+      ['Der Widerstand','band10/band10_10_band-10-k10-sentinels-truth.jpg'],
+      ['Die Befreiung','band10/band10_11_mass-awakening-the-liberation.jpg'],
+      ['Die Gnade','band10/band10_12_divine-grace-the-final-ascension.jpg']
+    ]}
   ];
 
   var container = document.getElementById('slides');
   var dotsWrap = document.getElementById('dots');
+  var jumpWrap = document.getElementById('jump');
   var frag = document.createDocumentFragment();
   var dotFrag = document.createDocumentFragment();
+  var jumpFrag = document.createDocumentFragment();
 
-  chapters.forEach(function(ch, i){
-    var el = document.createElement('div');
-    el.className = 'slide' + (i === 0 ? ' active' : '');
-    el.innerHTML =
-      '<img src="'+ch.img+'" alt="Kapitel '+ch.n+': '+ch.title+'" loading="'+(i===0?'eager':'lazy')+'">' +
-      '<div class="cap"><span class="num">Kapitel '+ch.n+'</span><h2>'+ch.title+'</h2></div>';
-    frag.appendChild(el);
+  var slideMeta = []; // { kind:'divider'|'chapter', band, bandStartIndex }
+  var bandStartIndex = [];
 
-    var dot = document.createElement('span');
-    if (i === 0) dot.className = 'on';
-    dotFrag.appendChild(dot);
+  bands.forEach(function(b){
+    bandStartIndex[b.band] = slideMeta.length;
+
+    var divider = document.createElement('div');
+    divider.className = 'slide divider';
+    divider.innerHTML =
+      '<div class="divider-inner">' +
+        '<span class="eyebrow">Neural Codex</span>' +
+        '<h1>Band ' + b.band + '</h1>' +
+        '<div class="rule"></div>' +
+        '<span class="band-sub">' + b.title + '</span>' +
+      '</div>';
+    frag.appendChild(divider);
+    slideMeta.push({ kind: 'divider', band: b.band });
+
+    var d = document.createElement('span');
+    d.className = 'divider-dot';
+    dotFrag.appendChild(d);
+
+    b.chapters.forEach(function(ch, i){
+      var title = ch[0], img = ch[1];
+      var el = document.createElement('div');
+      el.className = 'slide';
+      el.innerHTML =
+        '<img src="' + BASE + img + '" alt="Band ' + b.band + ', Kapitel ' + (i+1) + ': ' + title + '" loading="lazy">' +
+        '<div class="cap"><span class="num">Band ' + b.band + ' · Kapitel ' + (i+1) + '</span><h2>' + title + '</h2></div>';
+      frag.appendChild(el);
+      slideMeta.push({ kind: 'chapter', band: b.band });
+
+      var dot = document.createElement('span');
+      dotFrag.appendChild(dot);
+    });
+
+    var jumpBtn = document.createElement('button');
+    jumpBtn.textContent = b.band;
+    jumpBtn.title = 'Band ' + b.band + ' · ' + b.title;
+    jumpBtn.addEventListener('click', function(){ jumpToBand(b.band); });
+    jumpFrag.appendChild(jumpBtn);
   });
+
   container.appendChild(frag);
   dotsWrap.appendChild(dotFrag);
+  jumpWrap.appendChild(jumpFrag);
 
   var slides = container.querySelectorAll('.slide');
   var dots = dotsWrap.querySelectorAll('span');
+  var jumpButtons = jumpWrap.querySelectorAll('button');
   var counter = document.getElementById('counter');
   var idx = 0;
+
+  // eager-load the very first image only; everything else is lazy
+  var firstImg = slides[1] && slides[1].querySelector('img');
+  if (firstImg) firstImg.loading = 'eager';
 
   function render(){
     slides.forEach(function(s, i){ s.classList.toggle('active', i === idx); });
     dots.forEach(function(d, i){ d.classList.toggle('on', i === idx); });
-    counter.textContent = (idx+1) + ' / ' + slides.length;
+    var meta = slideMeta[idx];
+    jumpButtons.forEach(function(btn, i){ btn.classList.toggle('on', (i+1) === meta.band); });
+    counter.textContent = (idx+1) + ' / ' + slides.length + '  ·  Band ' + meta.band;
   }
 
   function go(delta){
     var next = idx + delta;
     if (next < 0 || next > slides.length - 1) return;
     idx = next;
+    render();
+  }
+
+  function jumpToBand(bandNum){
+    idx = bandStartIndex[bandNum];
     render();
   }
 
