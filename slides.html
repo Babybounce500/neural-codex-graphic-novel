@@ -43,7 +43,15 @@
     filter:saturate(.9) contrast(1.06); opacity:0; transition:opacity .55s ease;
   }
   .bg img.on{ opacity:1; }
+  .bg img.is-portrait{
+    object-fit:contain;
+    background:
+      radial-gradient(ellipse at center, rgba(60,52,38,.5) 0%, rgba(10,12,15,.97) 72%),
+      #000;
+  }
   .bg img.zoom{ animation:kenburns 18s cubic-bezier(.22,.61,.36,1) forwards; }
+  .bg img.zoom.is-portrait{ animation:kenburns-portrait 18s cubic-bezier(.22,.61,.36,1) forwards; }
+  @keyframes kenburns-portrait{ from{ transform:scale(1.0) translate3d(0,0,0);} to{ transform:scale(1.05) translate3d(0,-1%,0);} }
   @keyframes kenburns{ from{ transform:scale(1.0) translate3d(0,0,0);} to{ transform:scale(1.11) translate3d(-1.2%,-1%,0);} }
   .bg.terminal{
     background:
@@ -406,6 +414,10 @@
     if (!bg.terminal){
       var im = incoming.querySelector('img');
       requestAnimationFrame(function(){ im.classList.add('on'); });
+      (function markOrientation(){
+        if (im.naturalHeight > im.naturalWidth) im.classList.add('is-portrait');
+        else if (!im.complete || !im.naturalWidth) im.addEventListener('load', markOrientation, { once:true });
+      })();
     }
     activeBgIsA = !activeBgIsA;
   }
